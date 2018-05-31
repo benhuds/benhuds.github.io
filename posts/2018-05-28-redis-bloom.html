@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Ben Hudson - Redis, Bloom Filters, and Non-Cryptographic Hash Functions</title>
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+        <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Ben Hudson</a>
+            </div>
+            <nav>
+<!--                <a href="/">Home</a> -->
+                <a href="../pages/research.html">Research</a>
+                <a href="../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+<!--            <h1>Redis, Bloom Filters, and Non-Cryptographic Hash Functions</h1> -->
+            <article>
+    <section class="header">
+        Posted on May 28, 2018
+        
+            by Ben
+        
+    </section>
+    <section>
+        <h1 id="redis-bloom-filters-and-non-cryptographic-hash-functions">Redis, Bloom Filters, and Non-Cryptographic Hash Functions</h1>
+<p>Lately, I’ve been diving into NoSQL databases - <a href="https://redis.io/">Redis</a> in particular. And, like many others learning Redis, I had no choice but to make my own <a href="https://github.com/benhuds/yarb">Redis-backed Bloom filter</a>. It was a short project just counting lines of code, but gave me the opportunity to learn about Bloom filters from the ground up, and in turn gave me a better understanding of why Redis is often used for Bloom filters.</p>
+<p>Redis is hugely popular due to its speed and simplicity. Why should you care about Bloom filters at all, though? Well - chances are they’re already filtering spam emails from your inbox, reducing unnecessary disk lookups when you’re running database queries, and telling you “your username has been already been taken.”</p>
+<p>In this tutorial, we’ll walk through the basics of Bloom filters, remark on a couple of things you should be wary of when implementing your own Bloom filter, and briefly discuss how to implement a simple Redis-backed Bloom filter with the help of <a href="https://github.com/andymccurdy/redis-py">redis-py</a>.</p>
+<h2 id="bloom-filters-a-primer">1. Bloom filters: a primer</h2>
+<p>A <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</a> is a space-efficient probabilistic data structure which is primarily used to test for set membership. It’s space-efficient because it uses very little space to store information about whether or not an element is in a set, and it’s probabilistic in that it can return false positives - so if you ask a Bloom filter whether or not an element is in a set <span class="math inline"><em>S</em></span>, it’ll either return “<em>probably in <span class="math inline"><em>S</em></span></em>”, or “<em>definitely not in <span class="math inline"><em>S</em></span></em>.” <strong>If you need a quick answer to “is my element in this set?” on a regular basis and can tolerate some false positives every now and then, then you might want to look into using a Bloom filter.</strong></p>
+<h3 id="definitions">1.1. Definitions</h3>
+<p>A Bloom filter <span class="math inline"><em>b</em></span> is an array of <span class="math inline"><em>m</em></span> bits, used to represent a set <span class="math inline"><em>S</em></span>. It uses <span class="math inline"><em>k</em></span> different hashing functions <span class="math inline"><em>h</em><sub>1</sub>, ..., <em>h</em><sub><em>k</em></sub></span> to insert elements into the filter and test for set membership<span class="math inline"><em></em><sup>1</sup></span>.</p>
+<ul>
+<li>The empty set <span class="math inline">∅</span> is represented by a Bloom filter with all bits set to 0.</li>
+<li>To add an element <span class="math inline"><em>x</em></span> to <span class="math inline"><em>S</em></span>, set <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub>1</sub>(<em>x</em>)</span> mod <span class="math inline"><em>m</em></span>] = … = <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub><em>k</em></sub>(<em>x</em>)</span> mod <span class="math inline"><em>m</em></span>] = 1.</li>
+<li>To check whether an element <span class="math inline"><em>x</em></span> is in <span class="math inline"><em>S</em></span>, check if <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub>1</sub>(<em>x</em>)</span> mod <span class="math inline"><em>m</em></span>] = … = <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub><em>k</em></sub>(<em>x</em>)</span> mod <span class="math inline"><em>m</em></span>] = 1. If true, then <span class="math inline"><em>x</em></span> is probably in <span class="math inline"><em>S</em></span>. If false, then <span class="math inline"><em>x</em> ∉ <em>S</em></span>.</li>
+</ul>
+<p>In plain English:</p>
+<ul>
+<li>If you want to add an element to the set, you feed it to all of the hash functions to get some numbers which represent positions in the array. Set all of the bits at these positions to 1.</li>
+<li>If you want to see if an element is part of the set, then (once again) feed that element to the hash functions to get some numbers which represent positions in the bit array. If the element was previously inserted, then all of the bits at the positions given to you by the hash functions should have been set to 1. Therefore, if any of the bits at those positions are set to 0, then your number is definitely not in the set. Otherwise, if all of the bits at those positions are set to 1, then your number is probably in the set.</li>
+</ul>
+<p>Notice that computing array positions modulo the Bloom filter size is naturally prone to collision, and is the main source of false positives. There are ways to compute the optimal number of hash functions and Bloom filter size given the expected size of your set and acceptable false positive rate, but I won’t get into that here.</p>
+<h3 id="example">1.2. Example</h3>
+<p>Let’s walk through a simple example to illustrate inserting elements and finding false positives. Let <span class="math inline"><em>b</em></span> be our Bloom filter, a bit array of 10 bits, and let our set <span class="math inline"><em>S</em></span> = <span class="math inline">∅</span>, the empty set. Let’s also have two hash functions, <span class="math inline"><em>h</em><sub>1</sub></span> and <span class="math inline"><em>h</em><sub>2</sub></span> as follows:</p>
+<ul>
+<li><span class="math inline"><em>h</em><sub>1</sub>(<em>x</em>)</span> = <span class="math inline">3<em>x</em> + 1</span></li>
+<li><span class="math inline"><em>h</em><sub>2</sub>(<em>x</em>)</span> = <span class="math inline">123<em>x</em> + 4</span></li>
+</ul>
+<p>Keep in mind these are random functions for the purposes of this example. Since we’re starting with the empty set, our Bloom filter just looks like:</p>
+<p>[0,0,0,0,0,0,0,0,0,0]</p>
+<p>Let’s insert a couple of elements, starting with the number 10. Now <span class="math inline"><em>S</em> = {10}</span>. By definition, to represent this new member with our Bloom filter, we need to set <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub>1</sub>(10)</span> mod 10] = … <span class="math inline"><em>b</em></span>[<span class="math inline"><em>h</em><sub>2</sub>(10)</span> mod 10] = 1:</p>
+<ul>
+<li><span class="math inline"><em>h</em><sub>1</sub>(10)</span> mod 10 = 1, so set <span class="math inline"><em>b</em></span>[1] = 1.</li>
+<li><span class="math inline"><em>h</em><sub>2</sub>(10)</span> mod 10 = 0, so set <span class="math inline"><em>b</em></span>[4] = 1.</li>
+</ul>
+<p>Now our Bloom filter looks like:</p>
+<p>[0,1,0,0,1,0,0,0,0,0]</p>
+<p>Let’s keep going and insert the number 21 into our set, so <span class="math inline"><em>S</em> = {10, 21}</span>. Using the same process as above:</p>
+<ul>
+<li><span class="math inline"><em>h</em><sub>1</sub>(21)</span> mod 10 = 4, so set <span class="math inline"><em>b</em></span>[4] = 1.</li>
+<li><span class="math inline"><em>h</em><sub>2</sub>(21)</span> mod 10 = 7, so set <span class="math inline"><em>b</em></span>[7] = 1.</li>
+</ul>
+<p>Now our Bloom filter looks like:</p>
+<p>[0,1,0,0,1,0,0,1,0,0]</p>
+<p>Time to do some membership tests. Let’s see if <span class="math inline">15 ∈ <em>S</em></span>:</p>
+<ul>
+<li><span class="math inline"><em>h</em><sub>1</sub>(15)</span> mod 10 = 6. <span class="math inline"><em>b</em></span>[6] = 0.</li>
+<li><span class="math inline"><em>h</em><sub>2</sub>(15)</span> mod 10 = 9. <span class="math inline"><em>b</em></span>[9] = 0.</li>
+</ul>
+<p><span class="math inline"><em>b</em></span>[6] and <span class="math inline"><em>b</em></span>[9] are both 0, so our Bloom filter returns <span class="math inline">15 ∉ <em>S</em></span> as expected. Now let’s see if the number 20 is in our set:</p>
+<ul>
+<li><span class="math inline"><em>h</em><sub>1</sub>(20)</span> mod 10 = 1. <span class="math inline"><em>b</em></span>[1] = 1.</li>
+<li><span class="math inline"><em>h</em><sub>2</sub>(20)</span> mod 10 = 4. <span class="math inline"><em>b</em></span>[4] = 1.</li>
+</ul>
+<p><span class="math inline"><em>b</em></span>[1] = <span class="math inline"><em>b</em></span>[4] = 1, so our Bloom filter returns that 20 is probably in <span class="math inline"><em>S</em></span>. Notice this is a false positive, since we only have <span class="math inline"><em>S</em> = {10, 21}</span>.</p>
+<h3 id="remark-on-hash-functions">1.3. Remark on hash functions</h3>
+<p>Choose your hash functions wisely. Put simply: the slower your hash functions are, the slower your Bloom filter will be, and the slower you will be at whatever you’re using them for. Widely-used hash functions like SHA-256 and MD5 are in a class of functions known as <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function"><em>cryptographic hash functions</em></a>, which ensure certain important security properties, such as collision resistance, pre-image resistance, and the avalanche effect. On the other hand, <em>non-cryptographic hash functions</em>, such as <a href="http://www.isthe.com/chongo/tech/comp/fnv/index.html">FNV</a>, <a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a>, and Google’s <a href="https://github.com/google/cityhash">CityHash</a>, sacrifice some of these properties in exchange for much better speed. Bloom filters emphasize quickness, so I’ve used a couple of non-cryptographic hash functions in my implementation (I’ve seen both types used in the wild).</p>
+<h2 id="a-redis-backed-bloom-filter-in-python">2. A Redis-backed Bloom filter in Python</h2>
+<p>Fundamentally, Redis is a <a href="https://en.wikipedia.org/wiki/Key-value_database">key-value store</a>. TL;DR it’s a special type of database which maps keys to values (instead of arranging data in multiple rows and columns), much like a hash table. The simplicity of this model means it can be extremely performant, especially with workloads based on simple CRUD operations - think caches, leaderboards, pub/sub. Traditionally, key-value stores only support strings as values, but Redis also supports other data structures, such as, lists, hashes, and bit arrays - which is why it refers to itself a ‘data structure store,’ rather than a plain key-value store.</p>
+<p>To add to the speed of the key-value paradigm, Redis persists its data in-memory, eliminating any need to worry about disk latency. Of course, this also means that Redis’ capacity is limited to the amount of RAM available on the server running it. Redis also supports <a href="https://redis.io/topics/cluster-tutorial">sharding</a> and replication across multiple-node configurations, as well as <a href="https://redis.io/topics/persistence">snapshots to disk</a>.</p>
+<p>So, to summarize: key-value + in-memory = really fast, especially for simple CRUD-based workloads. Not well-suited for analytical workloads that require complex queries and aggregations, but a great foundation on which to build a Bloom filter, since they just rely on simple CRUD operations (actually just CRU, as we just learned).</p>
+<h2 id="putting-it-all-together">2.1. Putting it all together</h2>
+<p>It’s pretty straightforward to bake the definitions together with <a href="https://github.com/andymccurdy/redis-py">redis-py</a> to implement the Bloom filter in Python. The <code>__init__</code> method of my Bloom filter class is as follows:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, connection, name, m, k):
+    <span class="va">self</span>.connection <span class="op">=</span> connection
+    <span class="va">self</span>.name <span class="op">=</span> name
+    <span class="va">self</span>.m <span class="op">=</span> m
+    <span class="va">self</span>.k <span class="op">=</span> k</code></pre></div>
+<p>where <span class="math inline"><em>c</em><em>o</em><em>n</em><em>n</em><em>e</em><em>c</em><em>t</em><em>i</em><em>o</em><em>n</em></span> is the connection to your Redis server, <span class="math inline"><em>n</em><em>a</em><em>m</em><em>e</em></span> is the Redis key for your Bloom filter, and <span class="math inline"><em>m</em></span> and <span class="math inline"><em>k</em></span> are the size of the Bloom filter and number of hash functions respectively, as described in 1.1.</p>
+<p>In Redis, we can use strings to represent our bit arrays, and treat them as such using the <code>SETBIT</code> and <code>GETBIT</code> commands. Remember: speed matters. Redis’ <a href="https://redis.io/topics/pipelining">pipelining</a> feature allows you to ship multiple commands to the server in the same round to avoid multiple round trips. You’ll want to use this when implementing a Bloom filter, since Bloom filters require multiple <code>SETBIT</code> operations in each ‘insert’ query (and multiple <code>GETBIT</code> operations in each membership query).</p>
+<p>Here’s the <code>insert</code> function to (you guessed it) insert an element (<code>key</code>)into a Bloom filter:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> insert(<span class="va">self</span>, key):
+    pipe <span class="op">=</span> <span class="va">self</span>.connection.pipeline()
+    <span class="cf">for</span> offset <span class="kw">in</span> <span class="va">self</span>.calculate_offsets(key):
+        pipe.setbit(<span class="va">self</span>.name, offset, <span class="dv">1</span>)
+    pipe.execute()</code></pre></div>
+<p>where <code>calculate_offsets</code> is a function to calculate the positions in the array which we need to set to 1. Notice we wrap multiple <code>SETBIT</code> operations in the same <code>pipeline</code> to send them to the server at the same time and avoid multiple trips. The function to query set membership, which I’ve called <code>contains</code>, is similar:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> contains(<span class="va">self</span>, key):
+    pipe <span class="op">=</span> <span class="va">self</span>.connection.pipeline()
+    <span class="cf">for</span> offset <span class="kw">in</span> <span class="va">self</span>.calculate_offsets(key):
+        pipe.getbit(<span class="va">self</span>.name, offset)
+    res <span class="op">=</span> pipe.execute()
+    <span class="cf">return</span> <span class="bu">all</span>(res)</code></pre></div>
+<p>The difference here is that we store the resulting list of the bits’ values returned by each <code>GETBIT</code> command, and use a neat built-in function to check if <code>all</code> the values in the list are equal to 1.</p>
+<h3 id="a-naive-approach-to-bulk-inserts">2.2. A naive approach to bulk inserts</h3>
+<p>What if you want to insert multiple items in the same trip, like if you’re populating the Bloom filter? You could make a bulk insert function to pipeline a bunch of inserts to the server at once. I cut more than half of the time needed to insert 109,582 English words into a 1,000,000-bit Bloom filter with 3 hash derivations using the function below:</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> bulk_insert(<span class="va">self</span>, keys):
+    pipe <span class="op">=</span> <span class="va">self</span>.connection.pipeline()
+    <span class="cf">for</span> k <span class="kw">in</span> keys:
+        <span class="cf">for</span> offset <span class="kw">in</span> <span class="va">self</span>.calculate_offsets(k):
+            pipe.setbit(<span class="va">self</span>.name, offset, <span class="dv">1</span>)
+    pipe.execute()</code></pre></div>
+<p>The <em>proper</em> way to handle mass inserts in Redis, though, is to use the <a href="https://redis.io/topics/mass-insert">Redis protocol</a>.</p>
+<h2 id="summary">3. Summary</h2>
+<p>Learning about Redis inadvertedly led me to brush the surface of probabilistic data structures. I feel like most data structures people learn about in school are taken for granted. However, by design, Bloom filters give rise to many questions, as well as the opportunity to extend their basic functionality to answer some of these questions. I may follow up this post with a quick write-up on <a href="https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf">Cuckoo filters</a>, an recent alternative to Bloom filters which achieve better performance and support deletion.</p>
+<hr />
+<p><span class="math inline"><em></em><sup>1</sup></span> <a href="http://dmod.eu/deca/ft_gateway.cfm.pdf">Bloom’s original paper</a> states</p>
+<blockquote>
+<p><em>“each message in the set to be stored is hash coded into a number of distinct bit addresses, say <span class="math inline"><em>a</em><sub>1</sub></span>, <span class="math inline"><em>a</em><sub>2</sub></span>, …, <span class="math inline"><em>a</em><sub><em>d</em></sub></span>. Finally, all <span class="math inline"><em>d</em></span> bits addressed by <span class="math inline"><em>a</em><sub>1</sub></span> through <span class="math inline"><em>a</em><sub><em>d</em></sub></span> are set to 1.”</em></p>
+</blockquote>
+<p>Having <span class="math inline"><em>d</em></span> different hash functions will do the trick, but there are other methods to generate array positions. For example, you could use one hash function with <span class="math inline"><em>d</em></span> different seed values to get <span class="math inline"><em>d</em></span> different array positions (e.g. position 1 = element hashed with 1 as seed value, position 2 = element hashed with 2 as seed value, and so on). You could also <a href="https://www.eecs.harvard.edu/~michaelm/postscripts/rsa2008.pdf">simulate many hash functions just by using two</a>, which I’ve done in my implementation.</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Email: bhudson [at] wesleyan.edu. Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
