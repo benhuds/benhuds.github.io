@@ -1,0 +1,10 @@
+git checkout develop
+stack exec site clean
+stack exec site build
+git status
+git checkout master
+cp -a _site/. .
+git add -A
+git commit -m "publish"
+git push origin master
+git checkout develop
