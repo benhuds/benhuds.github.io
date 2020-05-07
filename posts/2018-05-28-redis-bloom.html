@@ -7,7 +7,7 @@
         <title>Ben Hudson - Yet Another Redis-backed Bloom Filter</title>
         <link rel="stylesheet" href="../css/default.css" />
         <link rel="stylesheet" href="../css/syntax.css" />
-        <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
         <header>
@@ -16,8 +16,9 @@
             </div>
             <nav>
 <!--                <a href="/">Home</a> -->
-                <a href="../pages/Research.html">Research</a>
-                <a href="../archive.html">Archive</a>
+                <a href="../pages/projects.html">Projects</a>
+                <a href="../pages/reading.html">Reading</a>
+                <a href="../archive.html">Writing</a>
             </nav>
         </header>
 
@@ -108,7 +109,7 @@
     <span class="cf">return</span> <span class="bu">all</span>(res)</code></pre></div>
 <p>The difference here is that we store the resulting list of the bits’ values returned by each <code>GETBIT</code> command, and use a neat built-in function to check if <code>all</code> the values in the list are equal to 1.</p>
 <h3 id="remark-on-hash-functions">2.1. Remark on hash functions</h3>
-<p>Choose your hash functions wisely. Put simply: the slower your hash functions are, the slower your Bloom filter will be, and the slower you will be at whatever you’re using them for. Widely-used hash functions like SHA-256 and MD5 are in a class of functions known as <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function"><em>cryptographic hash functions</em></a>, which ensure certain important security properties, such as collision resistance, pre-image resistance, and the avalanche effect. On the other hand, <em>non-cryptographic hash functions</em>, such as <a href="http://www.isthe.com/chongo/tech/comp/fnv/index.html">FNV</a>, <a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a>, and Google’s <a href="https://github.com/google/cityhash">CityHash</a>, sacrifice some of these properties in exchange for much better speed. I’ve seen both types used in the wild, but since Bloom filters emphasize quickness, I’ve used a couple of non-cryptographic hash functions in my implementation.</p>
+<p>Choose your hash functions wisely. Put simply: the slower your hash functions are, the slower your Bloom filter will be, and the slower you will be at whatever you’re using them for. Widely-used hash functions like SHA-256 and MD5 are in a class of functions known as <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function"><em>cryptographic hash functions</em></a>, which ensure certain important security properties, such as collision resistance, pre-image resistance, and the avalanche effect. On the other hand, <em>non-cryptographic hash functions</em>, such as <a href="https://www.isthe.com/chongo/tech/comp/fnv/index.html">FNV</a>, <a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a>, and Google’s <a href="https://github.com/google/cityhash">CityHash</a>, sacrifice some of these properties in exchange for much better speed. I’ve seen both types used in the wild, but since Bloom filters emphasize quickness, I’ve used a couple of non-cryptographic hash functions in my implementation.</p>
 <h3 id="a-naive-approach-to-bulk-inserts">2.2. A naive approach to bulk inserts</h3>
 <p>You could write a bulk insert function to pipeline a bunch of inserts to the server at once, say if you needed to initially populate the Bloom filter. I cut more than half of the time needed to insert 109,582 English words into a 1,000,000-bit Bloom filter with 3 hash derivations using the function below:</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> bulk_insert(<span class="va">self</span>, keys):
@@ -121,7 +122,7 @@
 <h2 id="summary">3. Summary</h2>
 <p>Learning about Redis inadvertedly led me to brush the surface of probabilistic data structures. By design, Bloom filters give rise to many questions, as well as the opportunity to extend their basic functionality to answer some of these questions. I may follow up this post with a quick write-up on <a href="https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf">Cuckoo filters</a>, a recent alternative to Bloom filters which achieve better performance and support deletion.</p>
 <hr />
-<p><span class="math inline"><em></em><sup>1</sup></span> <a href="http://dmod.eu/deca/ft_gateway.cfm.pdf">Bloom’s original paper</a> states</p>
+<p><span class="math inline"><em></em><sup>1</sup></span> <a href="https://dmod.eu/deca/ft_gateway.cfm.pdf">Bloom’s original paper</a> states</p>
 <blockquote>
 <p><em>“each message in the set to be stored is hash coded into a number of distinct bit addresses, say <span class="math inline"><em>a</em><sub>1</sub></span>, <span class="math inline"><em>a</em><sub>2</sub></span>, …, <span class="math inline"><em>a</em><sub><em>d</em></sub></span>. Finally, all <span class="math inline"><em>d</em></span> bits addressed by <span class="math inline"><em>a</em><sub>1</sub></span> through <span class="math inline"><em>a</em><sub><em>d</em></sub></span> are set to 1.”</em></p>
 </blockquote>
