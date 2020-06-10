@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Ben Hudson - Creating My Own "Best of the Decade" Spotify Playlist</title>
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Ben Hudson</a>
+            </div>
+            <nav>
+<!--                <a href="/">Home</a> -->
+                <a href="../pages/projects.html">Projects</a>
+                <a href="../pages/reading.html">Reading</a>
+                <a href="../archive.html">Blog</a>
+            </nav>
+        </header>
+
+        <main role="main">
+<!--            <h1>Creating My Own "Best of the Decade" Spotify Playlist</h1> -->
+            <article>
+    <section class="header">
+        Posted on May  1, 2020
+        
+            by Ben
+        
+    </section>
+    <section>
+        <h1 id="creating-my-own-best-of-the-decade-spotify-playlist">Creating My Own “Best of the Decade” Spotify Playlist</h1>
+<p>Spotify always does a great job with their end-of-year summaries and “Your Top Songs of 20__&quot; playlists – I love seeing how my taste in music has changed over time.</p>
+<p>At the end of 2019, Spotify presented a summary of my top songs and artists for the decade overall. I was hoping they’d wrap this up nicely into something like a “Your Top Songs” playlist as they’ve done for each individual year, and I was excited to see they did publish a <a href="https://www.cnet.com/how-to/spotify-wrapped-how-to-see-your-top-songs-for-2019-and-the-decade/">“Best of the Decade For You” playlist</a>. Unfortunately, the playlist contained songs I definitely did not recognize, so it wasn’t what I was looking for.</p>
+<p>As an alternative, I looked into ways to create a real “Best of the Decade” playlist myself using the <a href="https://developer.spotify.com/documentation/web-api/">Spotify Web API</a>, that contained my 100 most-played songs over the course of my Spotify membership (this is still technically “Best of the Decade” for me because I started using Spotify in the 2011/2012 timeframe).</p>
+<p>In this post, I share my notes on trying to create my own “Best of the Decade” Spotify playlist using the Spotify Web API, and provide an overview of the limitations in the Spotify Web API that prevented me from doing exactly what I wanted.</p>
+<p><em><strong><em>Spoiler alert:</em></strong> I still created a great playlist, filled with throwbacks that span multiple years of listening history. Want to go straight to the code instead of reading? Check out the repo on <a href="https://github.com/benhuds/spotify-top-songs">GitHub</a>.</em></p>
+<h2 id="diy-approach">1. DIY approach</h2>
+<p>From a functional perspective, I didn’t need too much from the Spotify Web API. I just needed 1) a way to create a playlist, 2) a way to get my most-played Spotify tracks, and 3) a way to add them to the aforementioned playlist. After skimming through the API documentation, it didn’t look like it was going to be too difficult to accomplish:</p>
+<ul>
+<li>The Spotify Web API allows you to <a href="https://developer.spotify.com/documentation/web-api/reference/playlists/create-playlist/">create playlists</a> and <a href="https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/">add tracks to them</a>. Pretty straightforward.</li>
+<li>The Spotify Web API’s “Top Artists/Tracks” functionality allows you to <a href="https://developer.spotify.com/documentation/web-api/reference/personalization/get-users-top-artists-and-tracks/">get a user’s top tracks</a>.</li>
+</ul>
+<p>Hold up – what exactly do they mean when they say “top tracks”?</p>
+<h2 id="spotify-doesnt-give-you-your-top-tracks-by-play-count">2. Spotify doesn’t give you your top tracks by play count</h2>
+<p>In my original mission, I was specifically looking to get my top tracks based on play count. However, according to Spotify’s API documentation, Spotify’s “Top Artists/Tracks” functionality gets “<em>the current user’s top artists or tracks based on <strong><em>calculated affinity</em></strong></em>.”</p>
+<p>Spotify defines ‘affinity’ as “<em>a measure of the expected preference a user has for a particular track or artist. It is based on user behavior, including play history, but does not include actions made while in incognito mode.</em>” Interesting.</p>
+<p>Only being able to get my top tracks based on Spotify’s notion of ‘affinity’ instead of play count was the first road bump I hit, but it wasn’t a showstopper.</p>
+<h2 id="spotify-calculates-top-artiststracks-over-a-certain-time-period">3. Spotify calculates “Top Artists/Tracks” over a certain time period</h2>
+<p>Something else that intrigued me about the “Top Artists/Tracks” functionality was that it calculates your top artists/tracks based on affinity <em>over a certain time frame</em>:</p>
+<ul>
+<li><code>long_term</code> (Spotify: “<em>calculated from several years of data and including all new data as it becomes available</em>”)</li>
+<li><code>medium_term</code> (Spotify: “<em>approximately last 6 months</em>”)</li>
+<li><code>short_term</code> (Spotify: “<em>approximately last 4 weeks</em>”)<span class="math inline"><em></em><sup>1</sup></span></li>
+</ul>
+<p>Given my objective, the only viable option was to use <code>long_term</code> as my time frame. Although the documentation says long term affinity is “<em>calculated from several years of data and including all new data as it becomes available</em>”, the resulting playlist didn’t look like it included songs from my early days of Spotify (2011/2012-ish).</p>
+<h2 id="summary">4. Summary</h2>
+<p>Despite these two minor road bumps, I stitched everything together pretty quickly and ended up with a personalized throwback playlist that spans multiple years of listening history. I also learned a bit about Spotify’s Web API in the process. I consider that a win.</p>
+<p>If you’re interested in the code, check out the repo on <a href="https://github.com/benhuds/spotify-top-songs">GitHub</a>!</p>
+<hr />
+<p><span class="math inline"><em></em><sup>1</sup></span> I can imagine Spotify might use the “Top Artists/Tracks” functionality with time frame set as <code>short_term</code> to create your <a href="https://newsroom.spotify.com/2019-09-24/introducing-two-new-personalized-playlists-on-repeat-and-repeat-rewind/"><em>On Repeat</em></a> playlist, which contains your top songs from the past 30 days.</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Email: bhudson [at] wesleyan.edu. Site proudly generated by
+            <a href="https://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
