@@ -1,82 +1,236 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Ben Hudson - Home</title>
-        <link rel="stylesheet" href="./css/default.css" />
-        <link rel="stylesheet" href="./css/syntax.css" />
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    </head>
-    <body>
-        <header>
-            <div class="logo">
-                <a href="./">Ben Hudson</a>
-            </div>
-            <nav>
-<!--                <a href="/">Home</a> -->
-                <a href="./pages/projects.html">Projects</a>
-                <a href="./pages/reading.html">Reading</a>
-                <a href="./archive.html">Writing</a>
-            </nav>
-        </header>
 
-        <main role="main">
-<!--            <h1>Home</h1> -->
-            <img src="./images/IMG_9699.JPG" style="float: right; margin: 16px;
-margin-bottom: 20px; width: 200px; height: 200px; border-radius: 50%" />
+<head>
+    <title>Ben Hudson - Home</title>
+
+    <!-- Fonts, stylesheets, etc. -->
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;650&display=swap');
+    </style>
+    <link rel="stylesheet" href="./css/default.css" />
+    <link rel="stylesheet" href="./css/syntax.css" />
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body style="margin-top: 35px; font-family: 'Inter';">
+
+<!-- Header/Nav Bar -->
+         
+<header>
+    <div class="logo">
+        <a href="./">Ben Hudson</a>
+    </div>
+    <nav>
+        <a href="#projects">Projects</a>
+        <a href="./pages/reading.html">Reading</a>
+        <a href="#writing">Writing</a>
+    </nav>
+</header>
+
+<!-- Main Content -->
+
+<main role="main">
+
+<img src="./images/IMG_9699.JPG" style="float: right; margin: 16px; margin-bottom: 20px; width: 200px; height: 200px; border-radius: 50%" />
+
+<!-- About Me -->
 
 <p>
-I'm currently a product manager at <a href="https://www.dremio.com/">Dremio</a>.
+    I'm currently a product manager at <a href="https://www.dremio.com/">Dremio</a>,
+    where I lead product for Dremio's data lakehouse management services.
 </p>
 
 <p>
-Before Dremio, I was a product manager at <a href="https://www.ibm.com/">IBM</a>, 
-where I spent most of my time working on data warehousing.
+    Before Dremio, I was a product manager at <a href="https://www.ibm.com/">IBM</a>, 
+    where I led product for IBM's cloud data warehouse offering.
 </p>
 
 <p>
-I completed my BA and MA in Computer Science at <a href="https://www.wesleyan.edu/">Wesleyan University</a>, 
-where I did research in programming languages and was advised by 
-<a href="https://dlicata.wescreates.wesleyan.edu/">Dan Licata</a>.
-Specifically, I worked on a system in <a href="https://wiki.portal.chalmers.se/agda/pmwiki.php">Agda</a>, 
-a dependently typed language and proof assistant, to extract and formally
-reason about recurrence relations from functional programs.
+    I completed my BA and MA in Computer Science at <a href="https://www.wesleyan.edu/">Wesleyan University</a>, 
+    where I did research in programming languages and was advised by 
+    <a href="https://dlicata.wescreates.wesleyan.edu/">Dan Licata</a>.
+    Specifically, I worked on a system in <a href="https://wiki.portal.chalmers.se/agda/pmwiki.php">Agda</a>, 
+    a dependently typed language and proof assistant, to extract and formally
+    reason about recurrence relations from functional programs.
 </p>
 
 <p>
-I enjoy working with diverse teams on difficult problems that take me way out
-of my comfort zone, and I’m fortunate to be able to do this every day as a
-product manager. Outside of work, I like <a href="./pages/reading.html">reading</a>, racket sports, 
-<a href="https://www.youtube.com/watch?v=FwTFtWVOoVc">music</a>, 
-and the occasional <a href="./pages/projects.html">side project</a>.
+    I enjoy working with diverse teams on difficult problems that take me way out
+    of my comfort zone, and I’m fortunate to be able to do this every day as a
+    product manager.
 </p>
 
 <p>
-You can find me on <a href="https://www.linkedin.com/in/benhuds/">LinkedIn</a>, 
-<a href="https://twitter.com/benhuds">Twitter</a>, or 
-<a href="https://github.com/benhuds">GitHub</a>.
+    Outside of work, I like <a href="https://en.wikipedia.org/wiki/History_of_tennis">racket sports</a>,
+    <a href="./pages/reading.html">reading</a>, and <a href="https://www.youtube.com/watch?v=FwTFtWVOoVc">music</a>.
 </p>
 
-<!--<h2>Recent Posts</h2>
+<p>
+    You can find me on <a href="https://www.linkedin.com/in/benhuds/">LinkedIn</a>, 
+    <a href="https://twitter.com/benhuds">Twitter</a>, or 
+    <a href="https://github.com/benhuds">GitHub</a>.
+</p>
+
+<p><br /></p>
+
+<!-- Theses -->
+
+<h2 id="projects">Theses</h2>
+
+<p>
+    <b>Computer-Checked Recurrence Extraction for Functional Programs</b><br />
+    Master’s thesis. Wesleyan University. 2016.<br />
+    [<a href="https://wesscholar.wesleyan.edu/etd_mas_theses/133/">pdf</a>] [<a href="../assets/ccrefp-poster.pdf">poster</a>] [<a href="../assets/ccrefp-slides.pdf">slides</a>] [<a href="https://github.com/benhuds/Agda/tree/master/complexity/complexity-final/submit">Agda code</a>]
+</p>
+
+<p>
+    <b>Certified Cost Bounds in Agda</b><br />
+    Senior honors thesis. Wesleyan University. 2015.<br />
+    [<a href="https://wesscholar.wesleyan.edu/etd_hon_theses/1484/">pdf</a>]
+</p>
+
+<p>
+    <br />
+</p>
+
+<!-- Code -->
+
+<h2 id="code">Code</h2>
+
+<p>
+    <b>Theorem Prover for First-Order Logic</b><br />
+    Project for an automated theorem proving course. Uses <a href="https://en.wikipedia.org/wiki/Resolution_(logic)">resolution</a>.</br />
+    [<a href="https://github.com/benhuds/ocaml-provers/tree/master/resolution">OCaml code</a>]
+</p>
+
+<p>
+    <b>Theorem Prover for Propositional Logic (Tableaux Method)</b><br />
+    Project for an automated theorem proving course. Uses the <a href="https://en.wikipedia.org/wiki/Method_of_analytic_tableaux">tableaux method</a>, with optional PDF output of proof tree.<br />
+    [<a href="https://github.com/benhuds/ocaml-provers/tree/master/propositional">OCaml code</a>]
+</p>
+
+<p>
+    <b>Theorem Prover for Propositional Logic (Wang's Algorithm)</b><br />
+    Project for a computational logic course. Uses <a href="https://www.cs.bham.ac.uk/research/projects/poplog/doc/popteach/wang">Wang's Algorithm</a>.<br />
+    [<a href="https://github.com/benhuds/wangs-algorithm">Prolog code</a>]
+</p>
+
+<p>
+    <b>"Best of the Decade" Spotify Playlist Generator</b><br />
+    Tried to create my own "Best of the Decade" playlist using the Spotify Web API.<br />
+    [<a href="https://github.com/benhuds/spotify-top-songs">Python code</a>] [<a href="../posts/2020-05-01-spotify-best-of.html">Blog post</a>]
+</p>
+
+<p>
+    <b>Redis-Backed Bloom Filter</b><br />
+    Wanted to learn about Redis. Ended up learning more about probabilistic data structures.<br />
+    [<a href="https://github.com/benhuds/yarb">Python code</a>] [<a href="../posts/2018-05-28-redis-bloom.html">Blog post</a>]
+</p>
+
+<p>
+    <b>Random <em>Friends</em> Episode Name Generator</b><br />
+    Got bored during a lunch break.<br />
+    [<a href="https://github.com/benhuds/friends-gen">Python code</a>]
+</p>
+
+<p>
+    <br />
+</p>
+
+<!-- Writing -->
+
+<h2 id="writing">Writing</h2>
+
+<p>
+    <a href="./posts/2023-12-23-the-road-from-poland-to-thailand-might-run-through-persia.html">The Road From Poland to Thailand Might Run Through Persia</a><br />
+    December 31, 2023
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/announcing-automated-iceberg-table-cleanup/">Announcing Automated Iceberg Table Cleanup</a><br />
+    December 15, 2023
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/arctic-changelog-july-2023/">Arctic Changelog - July 2023</a><br />
+    July 10, 2023
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/introducing-nessie-as-a-dremio-source/">Introducing Nessie as a Dremio Source</a><br />
+    June 20, 2023
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/bringing-the-semantic-layer-to-life/">Bringing the Semantic Layer to Life</a><br />
+    November 29, 2022
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/melt-away-your-cloud-data-warehouse-costs/">Melt Away Your Cloud Data Warehouse Costs</a><br />
+    August 29, 2022
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/enabling-a-data-mesh-with-an-open-lakehouse/">Enabling a Data Mesh with an Open Lakehouse</a><br />
+    June 2, 2022
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/announcing-the-dremio-october-2021-release/">Announcing the Dremio October 2021 Release</a><br />
+    November 11, 2021
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/announcing-the-dremio-august-2021-release/">Announcing the Dremio August 2021 Release</a><br />
+    September 13, 2021
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/announcing-the-dremio-june-2021-release/">Announcing the Dremio June 2021 Release</a><br />
+    June 29, 2021
+</p>
+
+<p>
+    <a href="https://www.dremio.com/blog/announcing-the-dremio-summer-2021-release/">Announcing the Dremio Summer 2021 Release</a><br />
+    June 3, 2021
+</p>
+
+<p>
+    <a href="./posts/2020-05-01-spotify-best-of.html">Creating My Own "Best of the Decade" Spotify Playlist</a><br />
+    May  1, 2020
+</p>
+    
+<p>
+    <a href="./posts/2018-05-28-redis-bloom.html">Yet Another Redis-backed Bloom Filter</a><br />
+    May 28, 2018
+</p>
+
+<p>
+    <br />
+</p>
+
+<h2 id="other">Other</h2>
+
 <ul>
-    
-        <li>
-            <a href="/posts/2020-05-01-spotify-best-of.html">Creating My Own "Best of the Decade" Spotify Playlist</a> - May  1, 2020
-        </li>
-    
-        <li>
-            <a href="/posts/2018-05-28-redis-bloom.html">Yet Another Redis-backed Bloom Filter</a> - May 28, 2018
-        </li>
-    
+    <li>
+        <a href="./pages/reading.html">Reading List</a>
+    </li>
 </ul>
--->
 
-        </main>
+</main>
 
-        <footer>
-            Email: bkk [dot] hudson [at] gmail [dot] com.
-        </footer>
-    </body>
+<!-- Footer -->
+
+<footer>
+    Email: bkk [dot] hudson [at] gmail [dot] com.
+</footer>
+    
+</body>
+
 </html>
